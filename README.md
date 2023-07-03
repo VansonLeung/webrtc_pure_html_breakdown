@@ -4,8 +4,8 @@
 
 ```
 # Assume you have node installed:
-node install -g pm2
-node install -g http-server
+npm install -g pm2
+npm install -g http-server
 ```
 
 ## Server
