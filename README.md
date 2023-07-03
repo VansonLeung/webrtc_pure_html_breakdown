@@ -3,9 +3,9 @@
 ## Prerequisites
 
 ```
-node
-pm2
-http-server
+# Assume you have node installed:
+node install -g pm2
+node install -g http-server
 ```
 
 ## Server
