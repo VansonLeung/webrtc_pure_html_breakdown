@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Van Auto Cam v0.0.4.63</title>
+  </head>
+  <style>
+    head, body {
+      background: transparent;
+    }
+  </style>
+  <body>
+    <div id="logic" style="display: none;">
+      <textarea style="width: 600px; height: 100px;" id="t_local_offer">t_local_offer</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_remote_offer">t_remote_offer</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_local_answer">t_local_answer</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_remote_answer">t_remote_answer</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_local_icecandidates">t_local_icecandidates</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_remote_icecandidates">t_remote_icecandidates</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_local_streams">t_local_streams</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_remote_streams">t_remote_streams</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_local_devices">t_local_devices</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_remote_devices">t_remote_devices</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_join_client_id">t_join_client_id</textarea>
+      <textarea style="width: 600px; height: 100px;" id="t_host_client_id">t_host_client_id</textarea>
+      
+      <div>
+        <button onclick="macro_join()">Join</button>
+        <button onclick="macro_host()">Host</button>
+        <button onclick="startSharingInput(true, false)">Start Sharing Video</button>
+        <button onclick="startSharingInput(false, true)">Start Sharing Audio</button>
+        <button onclick="startSharingInput(true, true)">Start Sharing Video + Audio</button>
+        <button onclick="startSharingInput(false, false)">Start Silent</button>
+        <button onclick="createOffer()">Create Offer</button>
+        <button onclick="acceptOffer()">Accept Offer</button>
+        <button onclick="createAnswer()">Create Answer</button>
+        <button onclick="acceptAnswer()">Accept Answer</button>
+        <button onclick="acceptRemoteIceCandidates()">Accept ICE Candidates</button>
+      </div>
+  
+      <pre>
+        Step 1: offerer create offer, setlocaldescription from offer
+        Step 2: answerer setremotedescription from offer
+        Step 3: answerer create answer, setlocaldescription from answer
+        Step 4: offerer setremotedescription from answerer
+        Step 5: both handle ice candidate, share ice candidates to opponents
+        Step 6: opponents exchange ice candidates and calls addIceCandidate with the ice candidates from each other
+      </pre>
+        
+    </div>
+
+    <video autoplay mute id="video_local"></video>
+    <video autoplay mute id="video_remote"></video>
+    
+    <script>
+      const url = new URL(window.location.href);
+      const searchParams = new URLSearchParams(url.search);
+      const params = {};
+      for (const [key, value] of searchParams) {
+        params[key] = decodeURIComponent(value);
+      }
+      console.log(params.signaling_server_url);
+      console.log(params.autohost);
+      console.log(params.host_id);
+      console.log(params.video_id);
+
+      if (params.fullscreenremote === "1") {
+        document.getElementById('logic').style.display = "none";
+        document.getElementById('video_local').style.display = "none";
+        document.getElementById('video_remote').style.display = "block";
+        document.getElementById('video_remote').style.position = "fixed";
+        document.getElementById('video_remote').style.top = "0px";
+        document.getElementById('video_remote').style.left = "0px";
+        document.getElementById('video_remote').style.right = "0px";
+        document.getElementById('video_remote').style.bottom = "0px";
+        document.getElementById('video_remote').style.width = "100vw";
+        document.getElementById('video_remote').style.height = "100vh";
+        document.getElementById('video_remote').style.objectFit = "fill";
+      } else {
+        document.getElementById('logic').style.display = "block";
+      }
+
+
+    </script>
+
+    <script src="test4.js?T=0.0.4.63"></script>
+
+    <script>
+      connectWebsocketSignalingServer(
+        params.signaling_server_url || ('wss://ap4.www.vanportdev.com/_apps/_webrtc_signaling_server/'),
+        true,
+        params.host_id,
+        params.join_id,
+      )
+      .then(function () {
+
+        if (params.join_id) {
+
+          t_join_client_id.value = params.join_id;
+        }
+
+
+        if (params.autorequestoffer === "1") {
+          console.log("autorequestoffer");
+
+          macro_full(true, params.video_id);
+
+        } 
+
+        else if (params.autohost === "1") {
+          console.log("autohost");
+
+          startSharingInput(true, true);
+          macro_full();
+
+        }
+
+
+        
+      })
+      .catch(function(e) {
+        console.error(e);
+      })
+
+
+      setInterval(function() {
+        for (var k in window.peerConnections) {
+          const peerConnection = window.peerConnections[k];
+          console.log("Peer connection", k, peerConnection.connectionState);
+          if (peerConnection.connectionState === "disconnected"
+          || peerConnection.connectionState === "failed") {
+            if (params.autorefreshconnection === "1") {
+              window.location.reload();
+            }
+            peerConnection.close();
+            delete window.peerConnections[k];
+          }
+        }
+      }, 2500);
+
+
+      setInterval(function () {
+        if (window.clientIdNotFound == true) {
+          if (params.autorefreshconnection === "1") {
+            window.location.reload();
+          }
+        }
+      }, 15000);
+
+
+
+
+    </script>
+
+  </body>
+</html>
